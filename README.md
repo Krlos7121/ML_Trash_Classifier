@@ -1,4 +1,5 @@
 # Clasificador de basura con TensorFlow y Keras
+Carlos Iván Fonseca Mondragón | A01771689
 
 Este proyecto busca desarrollar un modelo de clasificación de imágenes de basura utilizando TensorFlow. El modelo toma imágenes de basura como entrada y las clasifica en diferentes categorías (plástico, papel, metal, etc.). El dataset fue tomado de Kaggle [WasteWise: Know Your Waste](https://www.kaggle.com/datasets/smarthkaushal/waste-segregation) y se preprocesa utilizando técnicas de aumento de datos para mejorar la generalización del modelo.
 
@@ -24,6 +25,14 @@ Este proyecto busca desarrollar un modelo de clasificación de imágenes de basu
 - OS para manejo de archivos y directorios.
 - PIL para procesamiento de imágenes.
 
+## Reproducción del proyecto
+1. Clonar el repositorio y navegar a la carpeta del proyecto.
+2. Descargar el dataset desde Kaggle, y colocar las carpetas de "train" y "test" en el directorio raíz del proyecto, junto a los notebooks y el script de queries.
+3. Instalar las dependencias necesarias utilizando pip.
+4. Ejecutar el notebook `ETL_Preprocesamiento.ipynb`.
+5. Ejecutar el notebook `Modelo_Entrenamiento_v3.ipynb` para entrenar el modelo y evaluar su desempeño.
+6. Ejecutar el script `queries.py` para probar la interfaz de predicción con imágenes de prueba.
+
 ## Dataset
 
 El dataset utilizado es "WasteWise", un conjunto de datos de imágenes de basura con 4765 imágenes distribuidas en 9 categorías: cartón, vidrio, metal, papel, plástico, residuos orgánicos, textiles, vegetación y otros. Este dataset ya está dividido en conjuntos de entrenamiento y prueba, lo que facilita el proceso de desarrollo del modelo. Sin embargo, cuenta con un número limitado y desequilibrado de imágenes, lo que presenta desafíos para el entrenamiento de modelos de aprendizaje profundo, por lo que se aplicaron técnicas de aumento de datos para mejorar la generalización del modelo. Según el autor del dataset, el propósito de este conjunto de datos es apoyar el desarrollo de soluciones de IA sostenibles y fomentar la conciencia sobre la gestión adecuada de residuos.
@@ -47,19 +56,7 @@ Adicionalmente, en esta notebook se muestran ejemplos de imagenes preprocesadas 
 ## Construcción, entrenamiento y evaluación del modelo
 
 Tomando como base la arquitectura de 5 capas convolucionales propuesta por Nnamoko et al. (2022) en el artículo [Solid Waste Image Classification Using Deep Convolutional
-Neural Network](https://www.mdpi.com/2412-3811/7/4/47), se adaptó el modelo para el problema de clasificación en 9 categorías. Las modificaciones incluyen:
-
-1. Progresión de filtros 32 -> 64 -> 128 -> 256 -> 512 para aumentar la capacidad de representación.
-
-2. BatchNormalization después de cada capa convolucional para estabilizar el entrenamiento.
-
-3. Regularización L2 (lambda=1e-4) para compensar el menor tamaño del dataset.
-
-4. GlobalAveragePooling2D en lugar de Flatten para reducir parámetros y overfitting.
-
-5. Optimizador Adam con learning rate adaptativo (ReduceLROnPlateau) y early stopping, en lugar de Adadelta con épocas fijas.
-
-Estas modificaciones buscan mejorar la capacidad del modelo para aprender características relevantes de las imágenes de basura, mientras se mitiga el riesgo de sobreajuste dado el tamaño limitado del dataset.
+Neural Network](https://www.mdpi.com/2412-3811/7/4/47), se adaptó el modelo para el problema de clasificación en 9 categorías. 
 
 El modelo se construyó utilizando TensorFlow y Keras en el notebook `Modelo_Entrenamiento_v3.ipynb`. Antes de entrenar el modelo, se cargaron los datasets preprocesados y los metadatos generados en la fase de preprocesamiento. Se aplicó una estrategia de data augmentation a través de un pipeline con Keras que incluye rotaciones, zoom y contraste aleatorio para mejorar la generalización del modelo; evitando el uso de otras técnicas como el Gaussian Blur, que aunque puede ayudar a reducir el ruido, también puede eliminar detalles importantes de las imágenes, lo que podría afectar negativamente el rendimiento del modelo. Este proceso se aplicó solo al dataset de entrenamiento para evitar introducir ruido en los datos de validación y prueba.
 
@@ -90,7 +87,7 @@ Por esta razón, se complementó la evaluación con precisión, recall y F1-scor
 
 El recall por clase mide qué proporción de las muestras reales de esa clase fueron identificadas correctamente por el modelo.
 
-El F1-score por clase combina precisión y recall en una única métrica, resultando especialmente útil para evaluar el rendimiento en clases desbalanceadas, ya que penaliza tanto los falsos positivos como los falsos negativos.
+El F1-score por clase combina precisión y recall en una única métrica mediante su media armónica, resultando especialmente útil para evaluar el rendimiento en clases desbalanceadas, ya que penaliza tanto los falsos positivos como los falsos negativos (Sokolova & Lapalme, 2009).
 
 Más adelante, se imprime un reporte de clasificación detallado utilizando la función `classification_report` de Scikit-learn, que muestra estas métricas para cada clase, así como un promedio ponderado que refleja el rendimiento general del modelo teniendo en cuenta el desbalance entre clases.
 
@@ -102,9 +99,24 @@ El modelo fue evaluado utilizando el las 957 imágenes del conjunto de prueba, l
 
 Las curvas de entrenamiento muestran una convergencia de manera progresiva con un nivel moderado de overfitting, alcanzando una diferencia final de cerca de 10 puntos entre train y val accuracy, junto con oscilaciones en val_loss, que pueden atribuirse al desbalance de clases del dataset.
 
-Al analizar cada clase, se observa un comportamiento heterogéneo. Las clases Textile Trash, Food Organics, Glass y Paper obtuvieron las precisiones más altas, con valores entre 0.73 y 0.79, pero con recall bajo (0.23–0.31), lo que indica que el modelo predice estas clases con certeza pero omite muchas de sus instancias reales. En comparación, las clases Vegetation y Plastic tienen un patrón opuesto, con recall alto (0.99 y 0.77) y una precisión moderada (0.46 y 0.49), consistente con su mayor representación en el dataset. La categoría con peor desempeño fue Miscellaneous Trash, con un F1-score de 0.24, lo cual es esperado puesto que agrupa basura sin ninguna característica visual distintiva, lo que dificulta su clasificación.
+<img width="1389" height="490" alt="graph1" src="https://github.com/user-attachments/assets/a6a8ef76-ce86-42ae-b628-182f894945c8" />
+
+(Figura 1. Gráficas de Accuracy y Loss por Epoch)
+
+Al analizar cada clase, se observa un comportamiento heterogéneo. Las clases Textile Trash, Food Organics, Glass y Paper obtuvieron las precisiones más altas, con valores entre 0.73 y 0.79, pero con recall bajo (0.23–0.31), lo que indica que el modelo predice estas clases con certeza pero omite muchas de sus instancias reales. En comparación, las clases Vegetation y Plastic tienen un patrón opuesto, con recall alto (0.99 y 0.77) y una precisión moderada (0.46 y 0.49), consistente con su mayor representación en el dataset. La categoría con peor desempeño fue Miscellaneous Trash, con un F1-score de 0.24, lo cual es esperado puesto que agrupa basura sin ninguna característica visual distintiva, lo que dificulta su clasificación, como se puede ver en la matríz de confusión: 
+
+<img width="934" height="790" alt="cf" src="https://github.com/user-attachments/assets/69ca78fd-29d1-4c0f-b76d-fb5e413d4c7f" />
+(Figura 2. Matríz de confusión True vs Predicted)
+
+
 
 El F1-score macro promedio fue 0.52, reflejando la disparidad entre clases.
+
+## Queries
+Se adjunta un archivo **queries.py**, que te permite realizar predicciones con el modelo, basta con descargar el archivo .py y el modelo, asegurarte de que estén en el mismo directorio y podrás ver la predicción arrojada por el modelo. También se adjunta una carpeta con imágenes para probar, nunca antes vistas por el modelo. Es requisito contar con las mismas librerías que se quieren en los archivos de ETL y generación del modelo.
+
+<img width="798" height="910" alt="image" src="https://github.com/user-attachments/assets/3cf08dcc-9d67-4378-9806-3d9996bea7e7" />
+(Figura 3. Uso del archivo queries.py)
 
 ## Conclusiones
 
@@ -119,3 +131,5 @@ Como mejora, se puede explorar el uso de transfer learning con arquitecturas pre
 2. Nnamoko, N., Barrowclough, J., & Procter, J. (2022). Solid waste image classification using deep convolutional neural network. Infrastructures, 7(4), Artículo 47. https://doi.org/10.3390/infrastructures7040047
 
 3. Single, S., Iranmanesh, S., & Raad, R. (2023). RealWaste: A novel real-life data set for landfill waste classification using deep learning. Information, 14(12), Artículo 633. https://doi.org/10.3390/info14120633
+
+4. Sokolova, M., & Lapalme, G. (2009). A systematic analysis of performance measures for classification tasks. Information Processing & Management, 45(4), 427–437. https://doi.org/10.1016/j.ipm.2009.03.002
