@@ -8,7 +8,14 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Quitar warnings de TensorFlow
 
+"""
+ IMPORTANTE: Cargar el modelo que se desea probar
+ - best_model.keras (versión base del modelo)
+ - best_model_experimental.keras (modelo con una sexta capa densa y ajuste al learning rate) 
+ - best_model_mobilenet.keras (modelo con MobileNetV2 como base)
+"""
 model = tf.keras.models.load_model("best_model.keras")
+
 metadata = joblib.load("processed_datasets/metadata.pkl")
 class_names = metadata["class_names"]
 
